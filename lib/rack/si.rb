@@ -34,7 +34,7 @@ module Rack
       end
       group = Alchemist.conversion_table[group_name]
       base_unit = BASE_UNITS.find { |u| group.include?(u) }
-      measurement.to.send base_unit
+      measurement.to.send(base_unit).to_s
     end
   end
 end
