@@ -1,30 +1,34 @@
 require 'herbalist'
-Herbalist.basic = true
 
 module Rack
 
   # A Rack middleware for converting params to base SI units
   #
   class Rack::SI
+    attr_accessor :app, :options
+
     BASE_UNITS = [:metre, :metres, :meter, :meters, :litre, :litres, :liter, :liters, :joule, :joules, :gram, :grams, :watt, :watts]
 
-    def initialize(app)
-      @app = app
+    def initialize(app, options = {})
+      self.app = app
+      self.options = options
+      Herbalist.basic = true if Herbalist.respond_to?(:basic) && options[:basic]
     end
 
-    def call(env)
+    def call(env, options = {})
       convert_params(env)
-      @app.call(env)
+      app.call(env)
     end
 
     def convert_params(env)
-      params = ::Rack::Request.new(env).params
-      env['si.params'] = params.inject({}) do |hsh, (name, value)|
-        if measurement = Herbalist.parse(value)
-          value = normalize(measurement)
+      req = Request.new(env)
+      env['si.original_params'] = req.params.dup
+      [:GET, :POST].each do |method|
+        req.send(method).each do |name, value|
+          if measurement = Herbalist.parse(value)
+            req.send(method)[name] = normalize(measurement)
+          end
         end
-        hsh[name] = value
-        hsh
       end
     end
 

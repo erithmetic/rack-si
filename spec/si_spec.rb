@@ -16,7 +16,7 @@ describe Rack::SI do
 
     it 'ignores missing parameters' do
       post '/bar'
-      last_request.env['si.params'].should == {}
+      last_request.params.should == {}
     end
 
     it 'does not convert non-unit params' do
@@ -24,7 +24,7 @@ describe Rack::SI do
         'destination' => '2,3',
         'distance' => 233
       }
-      last_request.env['si.params'].should ==({
+      last_request.params.should ==({
         'destination' => '2,3',
         'distance' => '233'
       })
@@ -35,8 +35,17 @@ describe Rack::SI do
         'destination' => '2,3',
         'distance' => '233 miles'
       }
-      last_request.env['si.params']['destination'].should == '2,3'
-      last_request.env['si.params']['distance'].to_f.should == 374977.152
+      last_request.params['destination'].should == '2,3'
+      last_request.params['distance'].to_f.should == 374977.152
+    end
+
+    it 'keeps the original params close by' do
+      post '/automobile_trips', {
+        'destination' => '2,3',
+        'distance' => '233 miles'
+      }
+      last_request.env['si.original_params']['destination'].should == '2,3'
+      last_request.env['si.original_params']['distance'].should == '233 miles'
     end
 
     #it 'converts compound measurements' do
