@@ -61,3 +61,48 @@ describe Rack::SI do
   end
 end
 
+describe 'Rack::SI with env option' do
+  include Rack::Test::Methods
+
+  def app
+    Rack::SI.new lambda { |env| [200, {}, []] }, :env => true
+  end
+
+  describe '#call' do
+    it 'saves SI params to a separate ENV hash if desired' do
+      post '/automobile_trips', {
+        'destination' => '2,3',
+        'distance' => '233 miles'
+      }
+      last_request.params.should == {
+        'destination' => '2,3',
+        'distance' => '233 miles'
+      }
+      last_request.env['si.params']['destination'].should be_nil
+      last_request.env['si.params']['distance'].to_f.should == 374977.152
+    end
+  end
+end
+
+describe 'Rack::SI with custom env option' do
+  include Rack::Test::Methods
+
+  def app
+    Rack::SI.new lambda { |env| [200, {}, []] }, :env => 'my.hash'
+  end
+
+  describe '#call' do
+    it 'saves SI params to a custom ENV hash if desired' do
+      post '/automobile_trips', {
+        'destination' => '2,3',
+        'distance' => '233 miles'
+      }
+      last_request.params.should == {
+        'destination' => '2,3',
+        'distance' => '233 miles'
+      }
+      last_request.env['my.hash']['destination'].should be_nil
+      last_request.env['my.hash']['distance'].to_f.should == 374977.152
+    end
+  end
+end

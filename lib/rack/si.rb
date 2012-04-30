@@ -21,6 +21,25 @@ module Rack
     end
 
     def convert_params(env)
+      if options[:env]
+        convert_params_in_hash(env)
+      else
+        convert_params_in_situ(env)
+      end
+    end
+
+    def convert_params_in_hash(env)
+      params = Request.new(env).params
+      hash_name = options[:env].is_a?(String) ? options[:env] : 'si.params'
+      env[hash_name] = params.inject({}) do |hsh, (name, value)|
+        if measurement = Herbalist.parse(value)
+          hsh[name] = normalize(measurement)
+        end
+        hsh
+      end
+    end
+
+    def convert_params_in_situ(env)
       req = Request.new(env)
       env['si.original_params'] = req.params.dup
       [:GET, :POST].each do |method|
