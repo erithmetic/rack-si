@@ -106,3 +106,26 @@ describe 'Rack::SI with custom env option' do
     end
   end
 end
+
+describe 'Rack::SI with whitelist' do
+  include Rack::Test::Methods
+
+  def app
+    Rack::SI.new lambda { |env| [200, {}, []] }, :whitelist => %w{distance}
+  end
+
+  describe '#call' do
+    it 'converts only whitelisted SI params' do
+      post '/automobile_trips', {
+        'destination' => '2,3',
+        'distance' => '233 miles',
+        'weight' => '2013 lbs'
+      }
+      last_request.params.should == {
+        'destination' => '2,3',
+        'distance' => '374977.152',
+        'weight' => '2013 lbs'
+      }
+    end
+  end
+end
