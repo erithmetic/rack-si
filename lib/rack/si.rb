@@ -8,10 +8,15 @@ module Rack
     attr_accessor :app, :options
 
     BASE_UNITS = [:metre, :metres, :meter, :meters, :litre, :litres, :liter, :liters, :joule, :joules, :gram, :grams, :watt, :watts]
+    DEFAULT_OPTIONS = {
+      :env => false,
+      :basic => false
+    }
 
     def initialize(app, options = {})
       self.app = app
-      self.options = options
+      self.options = DEFAULT_OPTIONS.merge(options)
+
       Herbalist.basic = true if Herbalist.respond_to?(:basic) && options[:basic]
     end
 
