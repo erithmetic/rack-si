@@ -131,6 +131,35 @@ describe Rack::SI do
         }
       end
     end
+
+    context 'with path option' do
+      let(:options) { { :path => ['/accepted', /also_accepted/] } }
+
+      it 'converts params for a path matching a string' do
+        post '/accepted', {
+          'distance' => '233 miles'
+        }
+        last_request.params.should == {
+          'distance' => '374977.152'
+        }
+      end
+      it 'converts params for a path matching a regex' do
+        post '/also_accepted', {
+          'distance' => '233 miles'
+        }
+        last_request.params.should == {
+          'distance' => '374977.152'
+        }
+      end
+      it 'skips params conversion for a non-matching path' do
+        post '/fogettaboutit', {
+          'distance' => '233 miles'
+        }
+        last_request.params.should == {
+          'distance' => '233 miles'
+        }
+      end
+    end
   end
 
   describe '#herbalizable?' do

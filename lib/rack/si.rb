@@ -31,35 +31,35 @@ module Rack
     end
 
     def call(env, options = {})
-      convert_params(env) if path_matches?(env)
+      req = Request.new(env)
+      convert_params(env, req) if path_matches?(req)
       app.call(env)
     end
 
-    def path_matches?(env)
+    def path_matches?(req)
       options[:path].empty? || options[:path].find do |path|
-        (path.is_a?(String) && env['PATH_INFO'] == path) ||
-          (path.is_a?(Regexp) && env['PATH_INFO'] =~ path)
+        (path.is_a?(String) && req.path == path) ||
+          (path.is_a?(Regexp) && req.path =~ path)
       end
     end
 
-    def convert_params(env)
+    def convert_params(env, req)
       if options[:env]
-        convert_params_in_hash(env)
+        convert_params_in_hash(env, req)
       else
-        convert_params_in_situ(env)
+        convert_params_in_situ(env, req)
       end
     end
 
-    def convert_params_in_hash(env)
-      params = Request.new(env).params
+    def convert_params_in_hash(env, req)
+      params = req.params
       hash_name = options[:env].is_a?(String) ? options[:env] : 'si.params'
       env[hash_name] = params.inject({}) do |hsh, (name, value)|
         herbalize(hsh, name, value)
       end
     end
 
-    def convert_params_in_situ(env)
-      req = Request.new(env)
+    def convert_params_in_situ(env, req)
       env['si.original_params'] = req.params.dup
       [:GET, :POST].each do |method|
         hsh = req.send(method)
