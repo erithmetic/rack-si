@@ -114,5 +114,78 @@ describe Rack::SI do
         }
       end
     end
+
+    context 'with blacklist' do
+      let(:options) { { :blacklist => %w{distance} } }
+
+      it 'does not convert blacklisted SI params' do
+        post '/automobile_trips', {
+          'destination' => '2,3',
+          'distance' => '233 miles',
+          'weight' => '2013 lbs'
+        }
+        last_request.params.should == {
+          'destination' => '2,3',
+          'distance' => '233 miles',
+          'weight' => '913081.4408100001'
+        }
+      end
+    end
+  end
+
+  describe '#herbalizable?' do
+    let(:options) { {} }
+    let(:si) { app }
+
+    it 'returns true if param is whitelisted and not blacklisted' do
+      si.stub!(:whitelisted?).and_return true
+      si.stub!(:blacklisted?).and_return false
+      si.herbalizable?('foo').should be_true
+    end
+    it 'returns false if param is not whitelisted' do
+      si.stub!(:whitelisted?).and_return false
+      si.herbalizable?('foo').should be_false
+    end
+    it 'returns false if param is blacklisted' do
+      si.stub!(:whitelisted?).and_return true
+      si.stub!(:blacklisted?).and_return true
+      si.herbalizable?('foo').should be_false
+    end
+  end
+
+  describe '#whitelisted?' do
+    let(:options) { {} }
+    let(:si) { app }
+
+    it 'returns true if the whitelist is empty' do
+      si.options[:whitelist] = []
+      si.whitelisted?('foo').should be_true
+    end
+    it 'returns true if the param is in the whitelist' do
+      si.options[:whitelist] = ['foo']
+      si.whitelisted?('foo').should be_true
+    end
+    it 'returns false if the param is not in the whitelist' do
+      si.options[:whitelist] = ['foo']
+      si.whitelisted?('bar').should be_false
+    end
+  end
+
+  describe '#blacklisted?' do
+    let(:options) { {} }
+    let(:si) { app }
+
+    it 'returns false if the blacklist is empty' do
+      si.options[:blacklist] = []
+      si.blacklisted?('foo').should be_false
+    end
+    it 'returns true if the param is in the blacklist' do
+      si.options[:blacklist] = ['foo']
+      si.blacklisted?('foo').should be_true
+    end
+    it 'returns false if the param is not in the blacklist' do
+      si.options[:blacklist] = ['foo']
+      si.blacklisted?('bar').should be_false
+    end
   end
 end

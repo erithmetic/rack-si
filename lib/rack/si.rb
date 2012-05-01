@@ -12,7 +12,7 @@ module Rack
       :env => false,
       :basic => false,
       :whitelist => [],
-      :blacklist => nil
+      :blacklist => []
     }
 
     def initialize(app, options = {})
@@ -20,6 +20,7 @@ module Rack
       self.options = DEFAULT_OPTIONS.merge(options)
 
       self.options[:whitelist] = self.options[:whitelist].map(&:to_s)
+      self.options[:blacklist] = self.options[:blacklist].map(&:to_s)
       Herbalist.basic = true if Herbalist.respond_to?(:basic) && options[:basic]
     end
 
@@ -56,14 +57,22 @@ module Rack
     end
 
     def herbalize(hsh, name, value)
-      if whitelisted?(name) && measurement = Herbalist.parse(value)
+      if herbalizable?(name) && measurement = Herbalist.parse(value)
         hsh[name] = normalize(measurement)
       end
       hsh
     end
 
+    def herbalizable?(param)
+      whitelisted?(param) && !blacklisted?(param)
+    end
+
     def whitelisted?(param)
       options[:whitelist].empty? || options[:whitelist].include?(param)
+    end
+
+    def blacklisted?(param)
+      !options[:blacklist].empty? && options[:blacklist].include?(param)
     end
 
     def normalize(measurement)
