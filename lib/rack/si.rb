@@ -4,7 +4,7 @@ module Rack
 
   # A Rack middleware for converting params to base SI units
   #
-  class Rack::SI
+  class SI
     attr_accessor :app, :options
 
     BASE_UNITS = [:metre, :metres, :meter, :meters, :litre, :litres, :liter, :liters, :joule, :joules, :gram, :grams, :watt, :watts]
