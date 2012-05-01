@@ -12,21 +12,34 @@ module Rack
       :env => false,
       :basic => false,
       :whitelist => [],
-      :blacklist => []
+      :blacklist => [],
+      :path => []
     }
 
     def initialize(app, options = {})
       self.app = app
       self.options = DEFAULT_OPTIONS.merge(options)
 
-      self.options[:whitelist] = self.options[:whitelist].map(&:to_s)
-      self.options[:blacklist] = self.options[:blacklist].map(&:to_s)
+      normalize_options
       Herbalist.basic = true if Herbalist.respond_to?(:basic) && options[:basic]
     end
 
+    def normalize_options
+      self.options[:whitelist] = self.options[:whitelist].map(&:to_s)
+      self.options[:blacklist] = self.options[:blacklist].map(&:to_s)
+      self.options[:path] = [self.options[:path]] unless self.options[:path].is_a?(Array)
+    end
+
     def call(env, options = {})
-      convert_params(env)
+      convert_params(env) if path_matches?(env)
       app.call(env)
+    end
+
+    def path_matches?(env)
+      options[:path].empty? || options[:path].find do |path|
+        (path.is_a?(String) && env['PATH_INFO'] == path) ||
+          (path.is_a?(Regexp) && env['PATH_INFO'] =~ path)
+      end
     end
 
     def convert_params(env)
