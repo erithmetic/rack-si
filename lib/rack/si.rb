@@ -64,7 +64,9 @@ module Rack
       params = req.params
       hash_name = options[:env].is_a?(String) ? options[:env] : 'si.params'
       env[hash_name] = params.inject({}) do |hsh, (name, value)|
-        hsh[name] = herbalize(name, value)
+        if herbalization = herbalize(name, value)
+          hsh[name] = herbalization
+        end
         hsh
       end
     end
@@ -75,7 +77,9 @@ module Rack
     def convert_params_in_situ(env, req)
       env['si.original_params'] = req.params.dup
       req.params.each do |name, value|
-        req.update_param name, herbalize(name, value)
+        if herbalization = herbalize(name, value)
+          req.update_param name, herbalization
+        end
       end
     end
 
@@ -84,7 +88,7 @@ module Rack
       if herbalizable?(name) && measurement = Herbalist.parse(value)
         normalize(measurement)
       else
-        value
+        nil
       end
     end
 
