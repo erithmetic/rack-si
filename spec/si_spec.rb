@@ -1,3 +1,4 @@
+require 'helper'
 require 'rack/si'
 require 'rack/test'
 
